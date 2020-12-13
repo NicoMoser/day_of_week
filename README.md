@@ -20,6 +20,8 @@ where 0 means Sunday, 1 is Monday, etc.
 
 I recently came to revisit the formula and wanted to try to make sense of it, especially the 31\*m\/12 part.
 
+The following article https://www.academia.edu/31413474/Algorithm_to_calculate_the_day_of_the_week was the only other place I could find this expression but all it says is "the maximum duration of the month is 31 days and the year consists of 12 months, so the days between year-end and beginning of the month are equal to the integer part of the product of the number of the month m per the fraction of 31/12." I don't see how that follows and wanted to explore it myself.
+
 To convert a year, month, day to a day of the week, we assume a reference day (which will be determined later) and count number of days after that day, then take the remainder, mod 7. All days with the same remainder are on the same day of the week.
 
 To compute the number of days we use that every year has 365 days except leap years that have 366 days. Whether or not a year is a leap year depends on two things - the year and whether or not we're using a Julian or Gregorian calendar. That transition took place at a variety of dates in various places, but we'll only cover one of those dates. After we've accounted for the different years, we need to figure out the position of the day in the year, for example the 48th day of the year, but we will ruthlessly take shortcuts since we really only care about the difference of between two dates (our date of interest and the reference date) up to a multiple of 7.
@@ -34,7 +36,7 @@ To compute the day of the year given a day and month, we have to account for the
 
 So starting in March, our excess counts are 3 2 3 2 3 3 2 3 2 3 3 0. Let's look at an example. Suppose we want to figure out the day of the week for July 13 in a given year. We've assumed some reference date and we know how to count days in years, even with leap years, so we just need to compute the number of days from March 1 to July 13, modulo 7.
 
-This would be the number of days of March, April, May, and June, plus 13 minus 1, mod 7. (Why minus one? Because we're including both March 1 and July 13 in our arithmetic - for example, we can think of April 1 as "March 32nd" xxx) 
+This would be the number of days of March, April, May, and June, plus 13 minus 1, mod 7. (Why minus one? Because we're including both March 1 and July 13 in our arithmetic - for example, March 2nd is only 1 day after March 1, not 2, so the -1 corrects this.) 
 
 As numbers:
 
@@ -43,33 +45,19 @@ As numbers:
     = (     3      + 2      + 3      + 2 + 13 - 1) % 7
     = (10 + 13 - 1) % 7
     = 1
+    
+So July 13th is always 1 day of the week after March 1.
 
-How to think about this? We rewrote the days in the (whole) months March through June as 28 plus their excess, then added up those excesses - the cumulative total of excesses. 
+How to think about these expressions? We rewrote the days in the (whole) months March through June as 28 plus their excess, then added up those excesses - the cumulative total of excesses, or 10.
 
 So for dates in July, we would just have to add 10 to the date, subtract one, then take the remainder after dividing by 7. 
 
-And what is the meaning of the 1 at the end? It means that July 13th is 1 day of the week after March 1st. 
+Now let's look at the cumulative total of these values, 0 3 5 8 10 13 16 18 21 23 26 29, for March through February. We could simply use these as a lookup table from the value of m in our formula but it turns out that the expression 31\*m\/12 (remember we're oing integer division) exactly captures something close enough to this sequence. For values 1 to 12, the expression evaluates to 2 5 7 10 12 15 18 20 23 25 28 31. You can ponder until the next paragraph the relationship to the cumulative totals.
 
-We still haven't had to pick a reference date that forces March 1st of a particular year to have a particular day of the week.
+Notice that the sequence of 31\*m\/12 values are each exactly 2 more than the sequence of cumulative totals. This is perfect - we can always toss a constant in the expression to shift the resulting date value this way or that, and in fact the Julian calendar has a 5 there.
 
-But rather than picking a reference date, I'm going to modify the calculation and get the reference date out of that. I'm going to modify the cumulative 
+So we see that it works - this expression yields the exact cumulative totals, shifted by 2. But integer division isn't always so friendly especially as the monthly excesses are not in a simple even pattern, say alternating from 2 to 3. So I wrote a little program that tries every ratio from 1\*m\/1, 1\*m\/2, ..., 1\*m\/100, 2\*m\/1, 2\*m\/2, ..., 2\*m\/100, ... 100\*m\/100 and compares the resulting sequence for m going from 1 to 12 with the known working sequence.
 
+It turns out that 31/12 is the fraction with the smallest numerator/denominator but other fractions work as well. Not surprisingly 62/24 and 93/36 work as they are exact multiples of 31/12, but so also does 44/17, 57/22, 70/27, 75/29, 83/32, and 96/37. 
 
-I mentioned earlier that we would be using a reference date and I'm going to partially play that card now. We're going to look at the cumulative total of these values
-
-Now let's look at the cumulative total of these values, 2 5 8 10 13 16 18 21 23 26 29. Why are the cumulative totals important? 
-
-
-Suppose we want to figure out the day of the week for July 13 in a given year. We've assumed some reference date and we know how to count days in years, even with leap years, so we just need to compute the number of days from March 1 to July 13, modulo 7.
-
-This would be the number of days of March, April, May, and June, plus 13, mod 7. As numbers:
-
-      (31 +     30 +     31     + 30     + 13) % 7
-    = (28 + 3 + 28 + 2 + 28 + 3 + 28 + 2 + 13) % 7
-    = (     3      + 2      + 3      + 2 + 13) % 7
-    = (10 + 13) % 7
-    = 2
-
-How to think about this? We rewrote the days in the (whole) months as 28 plus their excess, then added up those excesses - the cumulative total of excesses. 
-
-Note that the cumulative excess as a function of m, the month number starting at 1 for March is pretty close to linear - the increase from month to month is always 2 or 3. The clever trick here is that we can use a linear expression in terms of m to get just over the target value and rely on integer division to truncate down to the actual value.
+I still don't understand the connection to maximum number of days in a month and months in a year. The units in the expresion would be (days/month)\*day\/(month\/year) which works out to some nonsense like (day\*day)\*(year)\/(month\*month). It's been ages since I dealt with units so the nonsense could be mine. It could be there is something there and the other fractions are just accidents of integer division. What I'll settle for is to use maximum days of a month and months of a year as a heuristic to remember the expression.
