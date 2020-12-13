@@ -56,7 +56,7 @@ Now let's look at the cumulative total of these values, 0 3 5 8 10 13 16 18 21 2
 
 Notice that the sequence of 31\*m\/12 values are each exactly 2 more than the sequence of cumulative totals. This is perfect - we can always toss a constant in the expression to shift the resulting date value this way or that, and in fact the Julian calendar has a 5 there.
 
-So we see that it works - this expression yields the exact cumulative totals, shifted by 2. But integer division isn't always so friendly especially as the monthly excesses are not in a simple even pattern, say alternating from 2 to 3. So I wrote a little program that tries every ratio from 1\*m\/1, 1\*m\/2, ..., 1\*m\/100, 2\*m\/1, 2\*m\/2, ..., 2\*m\/100, ... 100\*m\/100 and compares the resulting sequence for m going from 1 to 12 with the known working sequence.
+So we see that it works - this expression yields the exact cumulative totals, shifted by 2. But integer division isn't always so friendly especially as the monthly excesses are not in a simple even pattern, say alternating from 2 to 3. So I wrote a little program, find_month_params.sh that tries every ratio from 1\*m\/1, 1\*m\/2, ..., 1\*m\/100, 2\*m\/1, 2\*m\/2, ..., 2\*m\/100, ... 100\*m\/100 and compares the resulting sequence for m going from 1 to 12 with the known working sequence.
 
 It turns out that 31/12 is the fraction with the smallest numerator/denominator but other fractions work as well. Not surprisingly 62/24 and 93/36 work as they are exact multiples of 31/12, but so also does 44/17, 57/22, 70/27, 75/29, 83/32, and 96/37. 
 
